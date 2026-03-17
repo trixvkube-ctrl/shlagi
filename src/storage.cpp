@@ -3,8 +3,16 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
+namespace {
+static constexpr size_t kConfigDocSize = 2048;
+}
+
 bool Storage::begin() {
   return LittleFS.begin();
+}
+
+void Storage::resetToDefaults(AppConfig& cfg) const {
+  cfg = AppConfig();
 }
 
 String Storage::ipToString(const IPAddress& ip) {
@@ -29,8 +37,8 @@ bool Storage::load(AppConfig& cfg) {
     return false;
   }
 
-  JsonDocument doc;
-  auto err = deserializeJson(doc, f);
+  StaticJsonDocument<kConfigDocSize> doc;
+  DeserializationError err = deserializeJson(doc, f);
   f.close();
   if (err) {
     return false;
@@ -57,16 +65,16 @@ bool Storage::load(AppConfig& cfg) {
   cfg.net.gateway = stringToIp(doc["net"]["gateway"] | cfg.net.gateway.toString(), cfg.net.gateway);
   cfg.net.dns = stringToIp(doc["net"]["dns"] | cfg.net.dns.toString(), cfg.net.dns);
   cfg.net.http_port = doc["net"]["http_port"] | cfg.net.http_port;
-  cfg.net.trusted_ip = String((const char*)doc["net"]["trusted_ip"] | cfg.net.trusted_ip);
-  cfg.net.shared_token = String((const char*)doc["net"]["shared_token"] | cfg.net.shared_token);
-  cfg.net.login = String((const char*)doc["net"]["login"] | cfg.net.login);
-  cfg.net.password_hash = String((const char*)doc["net"]["password_hash"] | cfg.net.password_hash);
+  cfg.net.trusted_ip = String(doc["net"]["trusted_ip"] | cfg.net.trusted_ip);
+  cfg.net.shared_token = String(doc["net"]["shared_token"] | cfg.net.shared_token);
+  cfg.net.login = String(doc["net"]["login"] | cfg.net.login);
+  cfg.net.password_hash = String(doc["net"]["password_hash"] | cfg.net.password_hash);
 
   return true;
 }
 
 bool Storage::save(const AppConfig& cfg) {
-  JsonDocument doc;
+  StaticJsonDocument<kConfigDocSize> doc;
 
   doc["logic"]["open_mode"] = static_cast<uint8_t>(cfg.logic.open_mode);
   doc["logic"]["open_pulse_ms"] = cfg.logic.open_pulse_ms;
@@ -98,7 +106,7 @@ bool Storage::save(const AppConfig& cfg) {
   if (!f) {
     return false;
   }
-  serializeJsonPretty(doc, f);
+  serializeJson(doc, f);
   f.close();
   return true;
 }

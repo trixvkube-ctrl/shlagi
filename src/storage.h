@@ -7,6 +7,7 @@ class Storage {
   bool begin();
   bool load(AppConfig& cfg);
   bool save(const AppConfig& cfg);
+  void resetToDefaults(AppConfig& cfg) const;
 
  private:
   static String ipToString(const IPAddress& ip);

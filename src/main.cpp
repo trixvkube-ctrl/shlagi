@@ -28,7 +28,8 @@ void setup() {
   if (storage.load(config)) {
     logger.log("config", "storage", "config loaded");
   } else {
-    logger.log("config", "storage", "using defaults");
+    storage.resetToDefaults(config);
+    logger.log("warning", "storage", "config missing or invalid, defaults restored");
     config.net.password_hash = sha1(String("admin"));
     storage.save(config);
   }
